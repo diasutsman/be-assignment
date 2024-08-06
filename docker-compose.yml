@@ -1,0 +1,35 @@
+version: '3'
+
+services:
+  account-manager:
+    build: ./account-manager
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@db:5432/mydb
+    depends_on:
+      - db
+
+  payment-manager:
+    build: ./payment-manager
+    ports:
+      - "3001:3001"
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@db:5432/mydb
+    depends_on:
+      - db
+
+  db:
+    image: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: mydb
+    ports:
+      - "5434:5432"
+
+  adminer:
+    image: adminer
+    ports:
+      - 8080:8080
+ 
