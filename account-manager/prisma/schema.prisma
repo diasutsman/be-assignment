@@ -1,0 +1,46 @@
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+generator db {
+    provider = "go run github.com/steebchen/prisma-client-go"
+}
+
+model User {
+    id       Int       @id @default(autoincrement())
+    username String    @unique
+    password String
+    accounts Account[]
+}
+
+model Account {
+    id      Int              @id @default(autoincrement())
+    userId  Int
+    type    AccountType
+    user    User             @relation(fields: [userId], references: [id])
+    history PaymentHistory[]
+    balance Float
+}
+
+enum AccountType {
+    CREDIT
+    DEBIT
+    LOAN
+}
+
+model PaymentHistory {
+    id        Int      @id @default(autoincrement())
+    accountId Int
+    amount    Float
+    timestamp DateTime @default(now())
+    account   Account  @relation(fields: [accountId], references: [id])
+    toAddress String
+    status    PaymentHistoryStatus @default(PENDING)
+}
+
+enum PaymentHistoryStatus {
+    SUCCESS
+    FAILED
+    PENDING
+}

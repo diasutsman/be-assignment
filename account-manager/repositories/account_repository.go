@@ -1,26 +1,45 @@
 package repositories
 
 import (
-    "be-test-concrete-ai/account-manager/config"
-    "be-test-concrete-ai/account-manager/models"
+	"be-test-concrete-ai/account-manager/config"
+	"be-test-concrete-ai/account-manager/models/requests"
+	"be-test-concrete-ai/account-manager/prisma/db"
+	"context"
 )
 
-func GetAccountsByUserID(userID uint) ([]models.Account, error) {
-    var accounts []models.Account
-    if err := config.DB.Where("user_id = ?", userID).Find(&accounts).Error; err != nil {
-        return nil, err
-    }
-    return accounts, nil
+func GetAccountsByUserID(userID int) ([]db.AccountModel, error) {
+	println("userID", userID)
+	accounts, err := config.Client.Account.FindMany(
+		db.Account.UserID.Equals(userID),
+	).With(
+		db.Account.History.Fetch(),
+	).Exec(context.Background())
+
+	if err != nil {
+		return nil, err
+	}
+
+	return accounts, nil
 }
 
-func GetTransactionsByAccountID(accountID string) ([]models.PaymentHistory, error) {
-    var transactions []models.PaymentHistory
-    if err := config.DB.Where("account_id = ?", accountID).Find(&transactions).Error; err != nil {
-        return nil, err
-    }
-    return transactions, nil
+func GetTransactionsByAccountID(accountID int) ([]db.PaymentHistoryModel, error) {
+	transactions, err := config.Client.PaymentHistory.FindMany(
+		db.PaymentHistory.ID.Equals(accountID),
+	).Exec(context.Background())
+
+	if err != nil {
+		return nil, err
+	}
+
+	return transactions, nil
 }
 
-func CreateAccount(account *models.Account) error {
-	return config.DB.Create(account).Error
+func CreateAccount(account *requests.CreateAccountRequest, UserID int) (*db.AccountModel, error) {
+	return config.Client.Account.CreateOne(
+		db.Account.Type.Set(account.GetType()),
+		db.Account.User.Link(
+			db.User.ID.Equals(UserID),
+		),
+		db.Account.Balance.Set(account.Balance),
+	).Exec(context.Background())
 }

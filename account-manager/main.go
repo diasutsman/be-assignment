@@ -17,7 +17,13 @@ import (
 // @BasePath /
 
 func main() {
-	config.Init()
+	err := config.Init()
+	if err != nil {
+		return
+	}
+
+	defer config.Disconnect()
+
 	r := gin.Default()
 	routes.RegisterRoutes(r)
 
